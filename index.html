@@ -18,9 +18,25 @@
     .header-right { display:flex; align-items:center; gap:22px; color:var(--muted); font-size:12px; }
     .profile { width:36px;height:36px;border:0;border-radius:50%;background:#e6e1d5;display:grid;place-items:center;font-size:17px;cursor:pointer; }
     main { display:grid;grid-template-columns:minmax(0,1.52fr) minmax(280px,.78fr);gap:64px;padding-top:53px; }
+    .left-rail {grid-column:1 / -1;grid-row:2;max-width:440px}
     .left-art {display:none}
     .left-art img {display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 12px 32px rgba(88,112,65,.12)}
-    @media(min-width:1250px){.shell{max-width:1460px;padding-left:32px;padding-right:32px}#homeView{grid-template-columns:220px minmax(0,1.52fr) minmax(280px,.78fr);gap:42px}.left-art{display:block;align-self:start;position:sticky;top:24px}}
+    .diary-card {padding:19px;background:#f9faef;border:1px solid #dce6cc;border-radius:14px;box-shadow:0 8px 24px rgba(88,112,65,.08)}
+    .diary-heading {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+    .diary-heading h2 {font-family:'Gowun Batang',serif;font-size:19px;font-weight:700;color:#45603d;margin:0}
+    .diary-heading span {font-size:19px;color:#83a56d}
+    .diary-card label {display:block;font-size:11px;font-weight:700;color:#607857;margin:0 0 6px}
+    .diary-date,.diary-text {width:100%;border:1px solid #cbdab8;border-radius:8px;background:#fffef9;color:#3e5039;font:inherit;font-size:12px;outline:none}
+    .diary-date {padding:9px 10px;margin-bottom:14px}
+    .diary-text {min-height:170px;padding:11px;resize:vertical;line-height:1.7}
+    .diary-date:focus,.diary-text:focus {border-color:#78945f;box-shadow:0 0 0 3px rgba(120,148,95,.13)}
+    .diary-footer {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+    .diary-status {font-size:10px;color:#899982;line-height:1.4}
+    .diary-save {border:0;border-radius:7px;background:#78945f;color:#fffdf4;padding:9px 13px;font-size:11px;font-weight:700;white-space:nowrap}
+    .diary-save:hover {background:#66834e}
+    @media(min-width:1250px){.shell{max-width:1460px;padding-left:32px;padding-right:32px}#homeView{grid-template-columns:220px minmax(0,1.52fr) minmax(280px,.78fr);gap:42px}.left-rail{grid-column:auto;grid-row:auto;max-width:none;align-self:start;position:sticky;top:24px}.left-art{display:block;margin-bottom:17px}}
+    @media(min-width:761px) and (max-width:1249px){#homeView>section{grid-column:1;grid-row:1}#homeView>.side{grid-column:2;grid-row:1}}
+    @media(max-width:760px){.left-rail{grid-column:1;grid-row:2;max-width:none}#homeView>.side{grid-column:1;grid-row:3}}
     .eyebrow { color:#757c6f;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase; }
     h1 { font-family:'Gowun Batang',serif;font-size:43px;line-height:1.35;letter-spacing:-2px;margin:15px 0 8px;font-weight:700; }
     h1 em { font-style:normal;color:#758b38; }
@@ -312,7 +328,15 @@
       <div class="header-right"><span class="welcome">오늘도 반가워요</span><button class="auth-header-button" id="loginOpen" type="button">로그인</button><button class="auth-header-button primary" id="signupOpen" type="button">회원가입</button><span class="account-name" id="accountName" hidden></span><button class="auth-header-button" id="logoutButton" type="button" hidden>로그아웃</button><button class="profile" id="profileIcon" type="button" aria-label="프로필 이미지 선택" title="프로필 이미지 선택">🌱</button></div>
     </header>
     <main id="homeView">
-      <aside class="left-art" aria-label="클로버 콜라주 그림"><img src="left-clover-collage.svg" alt="토끼와 클로버, 연두색 체크무늬가 있는 포근한 콜라주" /></aside>
+      <aside class="left-rail" aria-label="나의 일기">
+        <div class="left-art"><img src="left-clover-collage.svg" alt="토끼와 클로버, 연두색 체크무늬가 있는 포근한 콜라주" /></div>
+        <form class="diary-card" id="diaryForm">
+          <div class="diary-heading"><h2>오늘의 일기</h2><span aria-hidden="true">☘</span></div>
+          <label for="diaryDate">날짜</label><input class="diary-date" id="diaryDate" type="date" required>
+          <label for="diaryText">오늘의 마음을 적어보세요</label><textarea class="diary-text" id="diaryText" maxlength="2000" placeholder="오늘 기억하고 싶은 순간이 있나요?"></textarea>
+          <div class="diary-footer"><span class="diary-status" id="diaryStatus" aria-live="polite">이 브라우저에만 저장돼요.</span><button class="diary-save" type="submit">일기 저장</button></div>
+        </form>
+      </aside>
       <section>
         <div class="eyebrow" id="todayLabel">YOUR DAILY ADVENTURE</div>
         <h1>오늘은 어떤<br><em>작은 모험</em>을 해볼까요?</h1>
@@ -453,8 +477,12 @@
     let state=JSON.parse(localStorage.getItem(stateKey)||'{}');
     const todayKey=()=>new Date().toLocaleDateString('en-CA');
     let today=todayKey();
+    const localDayKey=()=>{let date=new Date();return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`};
+    let diarySelectedDate=localDayKey(),diaryLoadedScope='',diaryDirty=false;
     let currentProof=null,proofLoadToken=0,photoDatabasePromise;
     function save(){localStorage.setItem(stateKey,JSON.stringify(state))}
+    function renderDiary(force=false){let scope=stateKey+':'+diarySelectedDate;if(!force&&scope===diaryLoadedScope)return;let date=document.getElementById('diaryDate'),text=document.getElementById('diaryText');date.max=localDayKey();date.value=diarySelectedDate;text.value=state.diaryEntries?.[diarySelectedDate]||'';document.getElementById('diaryStatus').textContent=text.value?'저장된 일기를 불러왔어요.':'이 브라우저에만 저장돼요.';diaryLoadedScope=scope;diaryDirty=false}
+    function saveDiary(){let value=document.getElementById('diaryText').value;state.diaryEntries=state.diaryEntries||{};if(value.trim())state.diaryEntries[diarySelectedDate]=value;else delete state.diaryEntries[diarySelectedDate];try{save();diaryDirty=false;document.getElementById('diaryStatus').textContent=value.trim()?'일기를 저장했어요.':'빈 일기를 지웠어요.';return true}catch(error){document.getElementById('diaryStatus').textContent='저장 공간을 확인해 주세요.';return false}}
     function photoDatabase(){if(!photoDatabasePromise)photoDatabasePromise=new Promise((resolve,reject)=>{if(!window.indexedDB){reject(new Error('사진 저장소를 사용할 수 없어요.'));return}let request=indexedDB.open('oneDayQuestPhotos',1);request.onupgradeneeded=()=>request.result.createObjectStore('photos');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});return photoDatabasePromise}
     async function photoStore(action,step,value){let db=await photoDatabase(),photoKey=(activeAccount?activeAccount.id+':':'')+today+':'+step;return new Promise((resolve,reject)=>{let transaction=db.transaction('photos',action==='get'?'readonly':'readwrite'),store=transaction.objectStore('photos'),result;let request=action==='get'?store.get(photoKey):action==='put'?store.put(value,photoKey):store.delete(photoKey);request.onsuccess=()=>result=request.result;transaction.oncomplete=()=>resolve(result);transaction.onerror=()=>reject(transaction.error)})}
     function showToast(message){let t=document.getElementById('toast');t.textContent=message;t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),3000)}
@@ -467,7 +495,7 @@
       let dayNumber=Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/86400000);let quote=quotes[((dayNumber%quotes.length)+quotes.length)%quotes.length];document.getElementById('quoteText').textContent=quote.text;document.getElementById('quoteAuthor').textContent=quote.author;
       let completed=state.completed||{};let streak=0;let cursor=new Date();while((cursor.toLocaleDateString('en-CA')===today?state.dailyComplete?.[today]:(state.dailyComplete?.[cursor.toLocaleDateString('en-CA')]||completed[cursor.toLocaleDateString('en-CA')]))){streak++;cursor.setDate(cursor.getDate()-1)}
       document.getElementById('streak').textContent=streak;document.getElementById('totalPoints').textContent=pointTotals().balance;
-      let start=weekStart(d), names=['월','화','수','목','금','토','일'], count=0, html='';for(let i=0;i<7;i++){let x=new Date(start);x.setDate(x.getDate()+i);let k=x.toLocaleDateString('en-CA'),done=!!state.dailyComplete?.[k]||(k!==today&&!!completed[k]),isToday=k===today;if(done)count++;let marker=done?'<svg viewBox="0 0 120 140" aria-label="완료"><use href="#glass-clover"/></svg>':x.getDate();html+=`<div class="day ${isToday?'today':''} ${done?'past':''}">${names[i]}<i>${marker}</i></div>`}document.getElementById('week').innerHTML=html;document.getElementById('weekCount').textContent=count+' / 7 완료';renderMission()}
+      let start=weekStart(d), names=['월','화','수','목','금','토','일'], count=0, html='';for(let i=0;i<7;i++){let x=new Date(start);x.setDate(x.getDate()+i);let k=x.toLocaleDateString('en-CA'),done=!!state.dailyComplete?.[k]||(k!==today&&!!completed[k]),isToday=k===today;if(done)count++;let marker=done?'<svg viewBox="0 0 120 140" aria-label="완료"><use href="#glass-clover"/></svg>':x.getDate();html+=`<div class="day ${isToday?'today':''} ${done?'past':''}">${names[i]}<i>${marker}</i></div>`}document.getElementById('week').innerHTML=html;document.getElementById('weekCount').textContent=count+' / 7 완료';renderMission();renderDiary()}
     function makeElement(tag,className,textValue){let node=document.createElement(tag);if(className)node.className=className;if(textValue!==undefined)node.textContent=textValue;return node}
     function selectOption(value,label){let option=document.createElement('option');option.value=value;option.textContent=label;return option}
     function pointTotals(){let mission=Object.values(state.completed||{}).reduce((sum,value)=>sum+(Number(value)||0),0),ad=(state.adRewards||[]).reduce((sum,item)=>sum+(Number(item.points)||0),0),spent=(state.redemptions||[]).reduce((sum,item)=>sum+(Number(item.cost)||0),0);return {mission,ad,spent,balance:Math.max(0,mission+ad-spent)}}
@@ -489,7 +517,7 @@
     function renderSocial(){renderGroupOptions();renderGroups();renderPosts()}
     function setView(view){syncDay();let views={home:'homeView',community:'communityView',groups:'groupsView',create:'createView',points:'pointsView',shop:'shopView'};if(!views[view])view='home';Object.entries(views).forEach(([name,id])=>document.getElementById(id).hidden=name!==view);document.querySelectorAll('.top-nav button').forEach(button=>{if(button.dataset.view===view)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});document.getElementById('nextMission').hidden=view!=='home';if(['community','groups','create'].includes(view))renderSocial();if(view==='points')renderPoints();if(view==='shop')renderShop();if(view==='home')loadDailyGuide();window.scrollTo(0,0)}
     function normalizeDailyPlan(){if(state.day!==today||!Array.isArray(state.missionPlan)||state.missionPlan.length!==missions.length){state.day=today;state.missionPlan=missions.map((_,i)=>i).sort(()=>Math.random()-.5);state.missionStep=0;state.missionDone=[];save()}}
-    function syncDay(){let current=todayKey();if(current!==today){today=current;normalizeDailyPlan();render()}}
+    function syncDay(){let current=todayKey();if(current!==today){let prior=today;today=current;if(diarySelectedDate===prior){diarySelectedDate=localDayKey();diaryLoadedScope=''}normalizeDailyPlan();render()}}
     const avatarIcons={clover:'🍀',butterfly:'🦋',heart:'💚',flower:'🌼',cloud:'☁️',moon:'🌙'};
     let selectedAvatar=null;
     function updateAuthHeader(){let signedIn=!!activeAccount;document.getElementById('loginOpen').hidden=signedIn;document.getElementById('signupOpen').hidden=signedIn;document.getElementById('logoutButton').hidden=!signedIn;let name=document.getElementById('accountName');name.hidden=!signedIn;name.textContent=signedIn?activeAccount.name:'';let profile=document.getElementById('profileIcon');profile.textContent=signedIn?(avatarIcons[activeAccount.avatar]||avatarIcons.clover):'🌱';profile.disabled=!signedIn;profile.title=signedIn?'프로필 이미지 바꾸기':'로그인 후 프로필을 선택할 수 있어요.'}
@@ -521,6 +549,9 @@
     document.getElementById('communityFilter').addEventListener('change',renderPosts);
     document.getElementById('postForm').addEventListener('submit',event=>{event.preventDefault();let input=document.getElementById('postText'),textValue=input.value.trim(),groupId=document.getElementById('postGroup').value;if(!textValue){input.focus();return}state.communityPosts=Array.isArray(state.communityPosts)?state.communityPosts:[];state.communityPosts.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),text:textValue,groupId,liked:false,createdAt:Date.now()});save();input.value='';renderPosts();showToast('이야기를 올렸어요.')});
     document.getElementById('groupForm').addEventListener('submit',event=>{event.preventDefault();let nameInput=document.getElementById('groupName'),descriptionInput=document.getElementById('groupDescription'),name=nameInput.value.trim(),description=descriptionInput.value.trim();if(!name||!description){(!name?nameInput:descriptionInput).focus();return}state.groups=Array.isArray(state.groups)?state.groups:[];if(state.groups.some(group=>group.name.toLocaleLowerCase()===name.toLocaleLowerCase())){showToast('같은 이름의 그룹이 이미 있어요.');nameInput.focus();return}state.groups.push({id:Date.now()+'-'+Math.random().toString(36).slice(2),name,description,joined:true});save();event.target.reset();setView('groups');showToast('그룹을 만들었어요.')});
+    document.getElementById('diaryForm').addEventListener('submit',event=>{event.preventDefault();if(saveDiary())showToast('일기를 저장했어요.')});
+    document.getElementById('diaryText').addEventListener('input',()=>{diaryDirty=true;document.getElementById('diaryStatus').textContent='저장하지 않은 내용이 있어요.'});
+    document.getElementById('diaryDate').addEventListener('change',event=>{let chosen=event.target.value;if(!chosen||chosen>localDayKey()||(diaryDirty&&!saveDiary())){event.target.value=diarySelectedDate;return}diarySelectedDate=chosen;renderDiary(true)});
     document.getElementById('weatherCity').addEventListener('change',event=>{state.weatherCity=event.target.value;save();loadDailyGuide(true)});
     document.getElementById('refreshWeather').addEventListener('click',()=>loadDailyGuide(true));
     document.getElementById('loginOpen').addEventListener('click',()=>openAuth('login'));
